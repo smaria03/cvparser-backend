@@ -24,6 +24,9 @@ jobs:
         with:
           ruby-version: '2.7.3'
 
+      - name: Update RubyGems
+        run: gem update --system 3.3.22
+
       - name: Install dependencies
         run: |
           gem install bundler -v 2.4.22
@@ -53,6 +56,9 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.3'
+
+      - name: Update RubyGems
+        run: gem update --system 3.3.22
 
       - name: Install dependencies
         run: |
