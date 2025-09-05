@@ -1,0 +1,37 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+- bearer_auth: []
+paths:
+  "/api/cvs/upload":
+    post:
+      summary: Upload a CV PDF file
+      tags:
+      - CVs
+      parameters: []
+      responses:
+        '200':
+          description: CV uploaded successfully
+        '400':
+          description: no file uploaded
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: file
+        required: true
+        description: CV file in PDF format
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
