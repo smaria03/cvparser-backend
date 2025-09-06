@@ -19,5 +19,18 @@ module Api
         render json: { error: cv.errors.full_messages }, status: :unprocessable_entity
       end
     end
+
+    def destroy
+      cv = CvUpload.find_by(id: params[:id])
+
+      unless cv
+        return render json: { error: 'CV not found' }, status: :not_found
+      end
+
+      cv.file.purge if cv.file.attached?
+      cv.destroy
+
+      render json: { message: 'CV deleted successfully' }, status: :ok
+    end
   end
 end

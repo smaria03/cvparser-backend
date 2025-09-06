@@ -5,5 +5,6 @@ Rails.application.routes.draw do
   mount Rswag::Api::Engine => '/api-docs'
   namespace :api do
     post 'cvs/upload', to: 'cvs#upload'
+    delete 'cvs/:id', to: 'cvs#destroy'
   end
 end
