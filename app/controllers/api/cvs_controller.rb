@@ -23,9 +23,7 @@ module Api
     def destroy
       cv = CvUpload.find_by(id: params[:id])
 
-      unless cv
-        return render json: { error: 'CV not found' }, status: :not_found
-      end
+      return render json: { error: 'CV not found' }, status: :not_found unless cv
 
       cv.file.purge if cv.file.attached?
       cv.destroy
