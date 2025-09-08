@@ -62,3 +62,4 @@ gem 'dotenv-rails', groups: %i[development test]
 gem 'ffi', '1.16.3'
 
 gem 'rainbow', '~> 3.1'
+gem 'pdf-reader'

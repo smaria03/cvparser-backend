@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'pdf-reader'
+
 module Api
   class CvsController < ApplicationController
     def upload
@@ -29,6 +31,25 @@ module Api
       cv.destroy
 
       render json: { message: 'CV deleted successfully' }, status: :ok
+    end
+
+    def extract_text
+      cv = CvUpload.find_by(id: params[:id])
+
+      return render json: { error: 'CV not found' }, status: :not_found unless cv&.file&.attached?
+
+      file_path = ActiveStorage::Blob.service.send(:path_for, cv.file.key)
+
+      text = extract_pdf_text(file_path)
+
+      render json: { text: text }, status: :ok
+    end
+
+    private
+
+    def extract_pdf_text(path)
+      reader = PDF::Reader.new(path)
+      reader.pages.map(&:text).join("\n")
     end
   end
 end

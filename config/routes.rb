@@ -6,5 +6,6 @@ Rails.application.routes.draw do
   namespace :api do
     post 'cvs/upload', to: 'cvs#upload'
     delete 'cvs/:id', to: 'cvs#destroy'
+    get 'cvs/:id/extract_text', to: 'cvs#extract_text'
   end
 end

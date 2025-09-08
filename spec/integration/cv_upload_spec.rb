@@ -61,4 +61,32 @@ RSpec.describe 'CV Upload API', type: :request do
       end
     end
   end
+
+  path '/api/cvs/{id}/extract_text' do
+    get 'Extract raw text from an uploaded CV PDF' do
+      tags 'CVs'
+      produces 'application/json'
+      parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
+
+      response '200', 'Text extracted successfully' do
+        let(:id) do
+          cv = CvUpload.create!
+          cv.file.attach(
+            io: Rails.root.join('spec/fixtures/files/sample_cv.pdf').open,
+            filename: 'sample_cv.pdf',
+            content_type: 'application/pdf'
+          )
+          cv.id
+        end
+
+        run_test!
+      end
+
+      response '404', 'CV not found' do
+        let(:id) { 'invalid' }
+
+        run_test!
+      end
+    end
+  end
 end

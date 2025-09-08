@@ -39,8 +39,25 @@ paths:
           description: CV deleted successfully
         '404':
           description: CV not found
+  "/api/cvs/{id}/extract_text":
+    get:
+      summary: Extract raw text from an uploaded CV PDF
+      tags:
+      - CVs
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: CV ID
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Text extracted successfully
+        '404':
+          description: CV not found
 servers:
-- url: https://{defaultHost}
+- url: http://{defaultHost}
   variables:
     defaultHost:
       default: localhost:3000
