@@ -1,0 +1,7 @@
+test:
+  adapter: postgresql
+  encoding: unicode
+  database: cvparser_test
+  username: postgres
+  password: postgres
+  host: localhost

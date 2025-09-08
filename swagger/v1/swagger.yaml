@@ -1,0 +1,46 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/api/cvs/upload":
+    post:
+      summary: Upload a CV PDF file
+      tags:
+      - CVs
+      parameters: []
+      responses:
+        '200':
+          description: CV uploaded successfully
+        '400':
+          description: no file uploaded
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: file
+        required: true
+        description: CV file in PDF format
+  "/api/cvs/{id}":
+    delete:
+      summary: Delete a CV and its attached file
+      tags:
+      - CVs
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: CV ID
+        schema:
+          type: string
+      responses:
+        '200':
+          description: CV deleted successfully
+        '404':
+          description: CV not found
+servers:
+- url: https://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
