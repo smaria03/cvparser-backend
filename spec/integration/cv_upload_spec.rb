@@ -79,6 +79,38 @@ RSpec.describe 'CV Upload API', type: :request do
           cv.id
         end
 
+        schema type: :object,
+               properties: {
+                 name: { type: :string },
+                 email: { type: :string },
+                 experiences: {
+                   type: :array,
+                   items: {
+                     type: :object,
+                     properties: {
+                       title: { type: :string },
+                       company: { type: :string },
+                       period: { type: :string }
+                     }
+                   }
+                 },
+                 current_job: {
+                   type: :object,
+                   nullable: true,
+                   properties: {
+                     title: { type: :string },
+                     company: { type: :string },
+                     period: { type: :string }
+                   }
+                 },
+                 total_experience_years: { type: :number },
+                 skills: {
+                   type: :array,
+                   items: { type: :string }
+                 },
+                 text: { type: :string }
+               }
+
         run_test!
       end
 

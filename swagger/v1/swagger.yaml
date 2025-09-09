@@ -54,6 +54,44 @@ paths:
       responses:
         '200':
           description: Text extracted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  experiences:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        period:
+                          type: string
+                  current_job:
+                    type: object
+                    nullable: true
+                    properties:
+                      title:
+                        type: string
+                      company:
+                        type: string
+                      period:
+                        type: string
+                  total_experience_years:
+                    type: number
+                  skills:
+                    type: array
+                    items:
+                      type: string
+                  text:
+                    type: string
         '404':
           description: CV not found
 servers:
