@@ -35,21 +35,15 @@ module Api
 
     def extract_text
       cv = CvUpload.find_by(id: params[:id])
-
       return render json: { error: 'CV not found' }, status: :not_found unless cv&.file&.attached?
 
-      file_path = ActiveStorage::Blob.service.send(:path_for, cv.file.key)
-
-      text = extract_pdf_text(file_path)
-
-      render json: { text: text }, status: :ok
-    end
-
-    private
-
-    def extract_pdf_text(path)
-      reader = PDF::Reader.new(path)
-      reader.pages.map(&:text).join("\n")
+      begin
+        result = PdfParserService.new(cv.file).extract_text
+        render json: result, status: :ok
+      rescue StandardError => e
+        render json: { error: 'Failed to extract text', details: e.message },
+               status: :unprocessable_entity
+      end
     end
   end
 end
