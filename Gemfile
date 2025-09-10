@@ -65,3 +65,6 @@ gem 'rainbow', '~> 3.1'
 gem 'pdf-reader'
 gem 'cv-parser'
 gem 'nokogiri'
+gem 'google-apis-sheets_v4'
+gem 'googleauth'
+

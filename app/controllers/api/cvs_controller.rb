@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'pdf-reader'
+require 'google_sheets_writer'
+require Rails.root.join('lib/google_sheets_writer')
 
 module Api
   class CvsController < ApplicationController
@@ -39,6 +41,23 @@ module Api
 
       begin
         result = PdfParserService.new(cv.file).extract_text
+
+        name = result[:name]
+        email = result[:email]
+        applied_for = 'Full Stack Software Engineer'
+        experience = result[:total_experience_years]
+
+        begin
+          GoogleSheetsWriter.new.append_row(
+            name: name,
+            email: email,
+            applied_for: applied_for,
+            experience: experience
+          )
+        rescue => sheet_error
+          Rails.logger.error "[GoogleSheets] Failed to append row: #{sheet_error.message}"
+        end
+
         render json: result, status: :ok
       rescue StandardError => e
         render json: { error: 'Failed to extract text', details: e.message },
