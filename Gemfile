@@ -67,4 +67,3 @@ gem 'cv-parser'
 gem 'nokogiri'
 gem 'google-apis-sheets_v4'
 gem 'googleauth'
-

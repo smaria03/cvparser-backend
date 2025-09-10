@@ -54,8 +54,8 @@ module Api
             applied_for: applied_for,
             experience: experience
           )
-        rescue => sheet_error
-          Rails.logger.error "[GoogleSheets] Failed to append row: #{sheet_error.message}"
+        rescue StandardError => e
+          Rails.logger.error "[GoogleSheets] Failed to append row: #{e.message}"
         end
 
         render json: result, status: :ok

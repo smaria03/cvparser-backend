@@ -3,8 +3,8 @@ require 'googleauth'
 
 class GoogleSheetsWriter
   SCOPE = Google::Apis::SheetsV4::AUTH_SPREADSHEETS
-  SPREADSHEET_ID = '1UihqJI_GpNIKvwg8gDz7pJ3r8loZt32o_1x2sgLVCTU'
-  RANGE = 'Foaie1!A:E'
+  SPREADSHEET_ID = '1UihqJI_GpNIKvwg8gDz7pJ3r8loZt32o_1x2sgLVCTU'.freeze
+  RANGE = 'Foaie1!A:E'.freeze
 
   def initialize
     keyfile = Rails.root.join('config/credentials/cvparser-471707-86d83e2e17ab.json')
