@@ -3,3 +3,5 @@
 /tmp/
 /storage/
 config/credentials/
+config/credentials/*.json
+.byebug_history

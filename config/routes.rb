@@ -7,5 +7,7 @@ Rails.application.routes.draw do
     post 'cvs/upload', to: 'cvs#upload'
     delete 'cvs/:id', to: 'cvs#destroy'
     get 'cvs/:id/extract_text', to: 'cvs#extract_text'
+    get 'cvs/:id/extract_sections', to: 'cvs#extract_sections'
+    get 'cvs/:id/extract_summary', to: 'cvs#extract_summary'
   end
 end

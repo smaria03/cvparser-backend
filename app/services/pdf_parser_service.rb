@@ -13,32 +13,6 @@ class PdfParserService
   include PdfParsing::SkillsExtractor
   include PdfParsing::ExperienceExtractor
 
-  PERIOD_REGEX = /
-  (
-    (Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|
-     Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?)
-    [\s\/\-\.]?
-    \d{4}
-  |
-    \d{1,2}[\/\-]\d{4}
-  |
-    \d{4}
-  )
-  \s*[\-]\s*
-  (
-    (Present|Prezent|Current)
-  |
-    (Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|
-     Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?|Dec(ember)?)
-    [\s\/\-\.]?
-    \d{4}
-  |
-    \d{1,2}[\/\-]\d{4}
-  |
-    \d{4}
-  )
-/ix.freeze
-
   def initialize(file)
     @file = file
     @tmp_pdf_path = Rails.root.join("tmp/cv_#{SecureRandom.hex}.pdf")
@@ -46,47 +20,48 @@ class PdfParserService
   end
 
   def extract_text
-    save_file_locally
-    generate_xml_with_poppler
-    doc = Nokogiri::XML(File.read(@tmp_xml_path))
-
-    ordered_text = extract_ordered_text(doc)
-    experiences = extract_raw_experiences(doc)
-
+    doc = doc_from_pdf
+    ordered_text = text_nodes_from(doc).pluck(:text)
     {
-      name: extract_name(doc),
-      email: extract_email(ordered_text.join("\n")),
-      experiences: experiences,
-      current_job: extract_current_job(experiences),
-      total_experience_years: calculate_total_experience_years(experiences),
-      skills: extract_skills(doc),
       text: ordered_text.join("\n")
     }
   ensure
     cleanup_temp_files
   end
 
-  def extract_ordered_text(doc)
-    texts_by_column = Hash.new { |h, k| h[k] = [] }
+  def extract_sections
+    doc = doc_from_pdf
+    text_nodes = text_nodes_from(doc)
 
-    doc.xpath('//text').each do |node|
-      text = node.text.strip
-      next if text.blank?
+    section_hint = find_section_hint(text_nodes)
+    return { section_hint: nil } unless section_hint
 
-      col_key = (node['left'].to_i / 50) * 50
-      texts_by_column[col_key] << { top: node['top'].to_i, text: text }
-    end
+    font_id = section_hint[:font]
+    section_blocks = build_section_blocks(text_nodes, font_id)
 
-    texts_by_column.sort_by { |left, _| left }
-                   .flat_map { |_, lines| lines.sort_by { |l| l[:top] }.map { |l| l[:text] } }
+    {
+      section_hint: section_hint,
+      font_id: font_id,
+      section_blocks: section_blocks
+    }
+  end
+
+  def extract_relevant_data
+    doc = doc_from_pdf
+    text = extract_text[:text]
+    sections = extract_sections
+
+    {
+      name: extract_name(doc),
+      email: extract_email(text),
+      experiences: extract_experiences(sections),
+      current_job: extract_current_job(sections),
+      total_experience_years: calculate_total_experience_years(sections),
+      skills: extract_skills(sections)
+    }
   end
 
   private
-
-  def extract_email(text)
-    match = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/)
-    match ? match[0] : 'Unknown'
-  end
 
   def save_file_locally
     File.binwrite(@tmp_pdf_path, @file.download)
@@ -102,35 +77,120 @@ class PdfParserService
     FileUtils.rm_f(@tmp_xml_path)
   end
 
-  def extract_current_job(experiences)
-    experiences.find { |exp| exp[:period].downcase.match?(/present|prezent|current/) }
+  def doc_from_pdf
+    save_file_locally
+    generate_xml_with_poppler
+    Nokogiri::XML(File.read(@tmp_xml_path))
   end
 
-  def calculate_total_experience_years(experiences)
-    total_months = experiences.sum do |exp|
-      next 0 unless exp[:period] =~ PERIOD_REGEX
-
-      from_str, to_str = exp[:period].split(/-+/).map(&:strip)
-      from_date = parse_date_string(from_str)
-      to_date = parse_date_string(to_str) || Time.zone.today
-
-      next 0 unless from_date
-
-      months = ((to_date.year * 12) + to_date.month) - ((from_date.year * 12) + from_date.month)
-      [months, 0].max
+  def text_nodes_from(doc)
+    nodes = doc.xpath('//text').map do |node|
+      {
+        text: node.text.strip,
+        font: node['font'].to_i,
+        top: node['top'].to_i,
+        left: node['left'].to_i
+      }
     end
 
-    (total_months / 12.0).round(1)
+    nodes.reject { |n| n[:text].empty? }
   end
 
-  def parse_date_string(date_str)
-    return Time.zone.today if date_str.downcase.match?(/present|prezent|current/)
-    return Date.new(date_str.to_i, 1, 1) if date_str.strip =~ /^\d{4}$/
+  def find_section_hint(text_nodes)
+    experience_titles = ['experience', 'work experience', 'professional experience',
+                         'employment history', 'career history', 'professional background',
+                         'experiență profesională', 'istoric profesional', 'experiență de muncă',
+                         'parcurs profesional', 'istoric angajări', 'experiență',]
 
-    begin
-      Date.parse(date_str)
-    rescue StandardError
-      nil
+    text_nodes.find do |n|
+      experience_titles.include?(n[:text].strip.downcase)
     end
+  end
+
+  def build_section_blocks(text_nodes, font_id)
+    section_blocks = []
+    state = {
+      buffer: nil,
+      collecting: false,
+      current_section_title: nil,
+      section_text_nodes: []
+    }
+
+    text_nodes.each_with_index do |node, idx|
+      next_node = text_nodes[idx + 1]
+
+      if title_node?(node, font_id)
+        process_title_node(node, next_node, font_id, state)
+      elsif state[:collecting]
+        process_section_content(node, next_node, font_id, state, section_blocks)
+      end
+    end
+
+    if state[:collecting] && state[:current_section_title]
+      section_blocks << build_section_block(state)
+    end
+
+    section_blocks
+  end
+
+  def extract_email(text)
+    match = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/)
+    match ? match[0] : 'Unknown'
+  end
+
+  def period_line?(text)
+    normalized = normalize_period_text(text)
+    normalized =~ PdfParserService::PERIOD_REGEX
+  end
+
+  def normalize_period_text(text)
+    text.gsub(/[\u2013\u2014]/, '-')
+        .gsub(/\b(\d)\s+(?=\d)/, '\1')
+        .gsub(/\b([A-Z])\s+(?=[A-Z])/, '\1')
+  end
+
+  def title_node?(node, font_id)
+    node[:font] == font_id
+  end
+
+  def handle_title_node(state, node)
+    if state[:buffer]
+      state[:buffer][:text] += ' ' + node[:text]
+    else
+      state[:buffer] = node.dup
+    end
+  end
+
+  def build_section_block(state)
+    {
+      title: state[:current_section_title],
+      text_nodes: state[:section_text_nodes]
+    }
+  end
+
+  def reset_section_state(state)
+    state[:current_section_title] = nil
+    state[:section_text_nodes] = []
+    state[:collecting] = false
+  end
+
+  def process_title_node(node, next_node, font_id, state)
+    handle_title_node(state, node)
+
+    return unless next_node.nil? || next_node[:font] != font_id
+
+    state[:current_section_title] = state[:buffer][:text]
+    state[:section_text_nodes] = []
+    state[:collecting] = true
+    state[:buffer] = nil
+  end
+
+  def process_section_content(node, next_node, font_id, state, section_blocks)
+    state[:section_text_nodes] << node
+
+    return unless next_node.nil? || next_node[:font] == font_id
+
+    section_blocks << build_section_block(state)
+    reset_section_state(state)
   end
 end

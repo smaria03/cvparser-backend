@@ -39,30 +39,47 @@ module Api
       cv = CvUpload.find_by(id: params[:id])
       return render json: { error: 'CV not found' }, status: :not_found unless cv&.file&.attached?
 
-      begin
-        result = PdfParserService.new(cv.file).extract_text
+      result = PdfParserService.new(cv.file).extract_text
+      render json: result
+    end
 
-        name = result[:name]
-        email = result[:email]
-        applied_for = 'Full Stack Software Engineer'
-        experience = result[:total_experience_years]
+    def extract_sections
+      cv = CvUpload.find_by(id: params[:id])
+      return render json: { error: 'CV not found' }, status: :not_found unless cv&.file&.attached?
 
-        begin
-          GoogleSheetsWriter.new.append_row(
-            name: name,
-            email: email,
-            applied_for: applied_for,
-            experience: experience
-          )
-        rescue StandardError => e
-          Rails.logger.error "[GoogleSheets] Failed to append row: #{e.message}"
-        end
+      result = PdfParserService.new(cv.file).extract_sections
+      render json: result
+    end
 
+    def extract_summary
+      cv = CvUpload.find_by(id: params[:id])
+      return render json: { error: 'CV not found' }, status: :not_found unless cv&.file&.attached?
+
+      result = PdfParserService.new(cv.file).extract_relevant_data
+
+      if result
+        write_to_google_sheets(result) if write_to_sheet_param?
         render json: result, status: :ok
-      rescue StandardError => e
-        render json: { error: 'Failed to extract text', details: e.message },
-               status: :unprocessable_entity
+      else
+        render json: { error: 'Failed to extract text' }, status: :unprocessable_entity
       end
+    end
+
+    private
+
+    def write_to_google_sheets(data)
+      GoogleSheetsWriter.new.append_row(
+        name: data[:name],
+        email: data[:email],
+        applied_for: 'Full Stack Software Engineer',
+        experience: data[:total_experience_years]
+      )
+    rescue StandardError => e
+      Rails.logger.error "[GoogleSheets] Failed to append row: #{e.message}"
+    end
+
+    def write_to_sheet_param?
+      ActiveModel::Type::Boolean.new.cast(params[:write_to_sheet])
     end
   end
 end
