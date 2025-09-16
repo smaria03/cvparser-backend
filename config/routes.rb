@@ -9,5 +9,6 @@ Rails.application.routes.draw do
     get 'cvs/:id/extract_text', to: 'cvs#extract_text'
     get 'cvs/:id/extract_sections', to: 'cvs#extract_sections'
     get 'cvs/:id/extract_summary', to: 'cvs#extract_summary'
+    post 'cvs/save_to_sheet', to: 'cvs#save_to_sheet'
   end
 end

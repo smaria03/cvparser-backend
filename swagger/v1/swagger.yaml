@@ -51,12 +51,6 @@ paths:
         description: CV ID
         schema:
           type: string
-      - name: write_to_sheet
-        in: query
-        required: false
-        description: Append to Google Sheets
-        schema:
-          type: boolean
       responses:
         '200':
           description: Summary extracted successfully
@@ -169,6 +163,38 @@ paths:
                                 type: integer
         '404':
           description: CV not found
+  "/api/cvs/save_to_sheet":
+    post:
+      summary: Save extracted CV summary to Google Sheets
+      tags:
+      - CVs
+      parameters: []
+      responses:
+        '200':
+          description: Saved to Google Sheets successfully
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: object
+                  required:
+                  - name
+                  - email
+                  - total_experience_years
+                  properties:
+                    name:
+                      type: string
+                      example: Maria Silaghi
+                    email:
+                      type: string
+                      example: smaria.oana@yahoo.com
+                    total_experience_years:
+                      type: string
+                      example: 2.5y
+        required: true
 servers:
 - url: http://{defaultHost}
   variables:

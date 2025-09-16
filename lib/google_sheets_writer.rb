@@ -7,7 +7,7 @@ class GoogleSheetsWriter
   RANGE = 'Foaie1!A:E'.freeze
 
   def initialize
-    keyfile = Rails.root.join('config/credentials/cvparser-471707-86d83e2e17ab.json')
+    keyfile = Rails.root.join('config/credentials/cvparser-471707-ea26336728d2.json')
     authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
       json_key_io: File.open(keyfile),
       scope: SCOPE
