@@ -39,9 +39,62 @@ paths:
           description: CV deleted successfully
         '404':
           description: CV not found
+  "/api/cvs/{id}/extract_summary":
+    get:
+      summary: Extract structured summary from a CV PDF
+      tags:
+      - CVs
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: CV ID
+        schema:
+          type: string
+      - name: write_to_sheet
+        in: query
+        required: false
+        description: Append to Google Sheets
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Summary extracted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  experiences:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        job_details:
+                          type: string
+                        period:
+                          type: string
+                  current_job:
+                    type: object
+                    nullable: true
+                    properties:
+                      job_details:
+                        type: string
+                      period:
+                        type: string
+                  total_experience_years:
+                    type: string
+                  skills:
+                    type: string
+        '404':
+          description: CV not found
   "/api/cvs/{id}/extract_text":
     get:
-      summary: Extract raw text from an uploaded CV PDF
+      summary: Extract raw text from a CV PDF
       tags:
       - CVs
       parameters:
@@ -59,39 +112,61 @@ paths:
               schema:
                 type: object
                 properties:
-                  name:
+                  text:
                     type: string
-                  email:
-                    type: string
-                  experiences:
+        '404':
+          description: CV not found
+  "/api/cvs/{id}/extract_sections":
+    get:
+      summary: Extract structured sections from a CV PDF
+      tags:
+      - CVs
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: CV ID
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Sections extracted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  section_hint:
+                    type: object
+                    nullable: true
+                    properties:
+                      text:
+                        type: string
+                      font:
+                        type: integer
+                  font_id:
+                    type: integer
+                    nullable: true
+                  section_blocks:
                     type: array
                     items:
                       type: object
                       properties:
                         title:
                           type: string
-                        company:
-                          type: string
-                        period:
-                          type: string
-                  current_job:
-                    type: object
-                    nullable: true
-                    properties:
-                      title:
-                        type: string
-                      company:
-                        type: string
-                      period:
-                        type: string
-                  total_experience_years:
-                    type: number
-                  skills:
-                    type: array
-                    items:
-                      type: string
-                  text:
-                    type: string
+                        text_nodes:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              text:
+                                type: string
+                              top:
+                                type: integer
+                              left:
+                                type: integer
+                              font:
+                                type: integer
         '404':
           description: CV not found
 servers:

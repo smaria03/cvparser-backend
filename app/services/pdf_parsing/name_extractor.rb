@@ -4,8 +4,11 @@ module PdfParsing
       biggest_font_id = find_biggest_font_id(doc)
       return 'Unknown' unless biggest_font_id
 
-      name_node = find_likely_name_node(doc, biggest_font_id)
-      format_name_text(name_node)
+      node = find_likely_name_node(doc, biggest_font_id)
+      return 'Unknown' unless node
+
+      text = node.text.strip.gsub("\u00A0", ' ')
+      text.empty? ? 'Unknown' : text
     end
 
     def extract_font_sizes(doc)
@@ -34,13 +37,6 @@ module PdfParsing
         word_count = text.split.size
         word_count.between?(2, 4) && skip_words.none? { |w| text.downcase.include?(w) }
       end
-    end
-
-    def format_name_text(node)
-      return 'Unknown' unless node
-
-      name = node.text.strip.gsub("\u00A0", ' ')
-      name.empty? ? 'Unknown' : name
     end
   end
 end
