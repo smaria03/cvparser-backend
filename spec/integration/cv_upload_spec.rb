@@ -67,8 +67,6 @@ RSpec.describe 'CV Upload API', type: :request do
       tags 'CVs'
       produces 'application/json'
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
-      parameter name: :write_to_sheet, in: :query, type: :boolean, required: false,
-                description: 'Append to Google Sheets'
 
       response '200', 'Summary extracted successfully' do
         let(:id) do
@@ -206,6 +204,43 @@ RSpec.describe 'CV Upload API', type: :request do
 
       response '404', 'CV not found' do
         let(:id) { 'invalid' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/cvs/save_to_sheet' do
+    post 'Save extracted CV summary to Google Sheets' do
+      tags 'CVs'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :summary, in: :body, required: true, schema: {
+        type: :object,
+        properties: {
+          summary: {
+            type: :object,
+            required: %w[name email total_experience_years],
+            properties: {
+              name: { type: :string, example: 'Maria Silaghi' },
+              email: { type: :string, example: 'smaria.oana@yahoo.com' },
+              total_experience_years: { type: :string, example: '2.5y' }
+            }
+          }
+        }
+      }
+
+      response '200', 'Saved to Google Sheets successfully' do
+        let(:summary) do
+          {
+            summary: {
+              name: 'Maria Silaghi',
+              email: 'smaria.oana@yahoo.com',
+              total_experience_years: '2.5y'
+            }
+          }
+        end
+
         run_test!
       end
     end

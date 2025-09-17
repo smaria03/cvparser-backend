@@ -56,12 +56,21 @@ module Api
       return render json: { error: 'CV not found' }, status: :not_found unless cv&.file&.attached?
 
       result = PdfParserService.new(cv.file).extract_relevant_data
+      render json: result
+    end
 
-      if result
-        write_to_google_sheets(result) if write_to_sheet_param?
-        render json: result, status: :ok
-      else
-        render json: { error: 'Failed to extract text' }, status: :unprocessable_entity
+    def save_to_sheet
+      summary = params.require(:summary).permit(
+        :name,
+        :email,
+        :total_experience_years
+      )
+
+      begin
+        write_to_google_sheets(summary.to_h.symbolize_keys)
+        render json: { message: 'Saved to Google Sheets successfully' }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
     end
 
@@ -76,10 +85,6 @@ module Api
       )
     rescue StandardError => e
       Rails.logger.error "[GoogleSheets] Failed to append row: #{e.message}"
-    end
-
-    def write_to_sheet_param?
-      ActiveModel::Type::Boolean.new.cast(params[:write_to_sheet])
     end
   end
 end

@@ -85,8 +85,16 @@ module PdfParsing
       job_lines = nodes[[idx - lines_before, 0].max...idx]
                   .pluck(:text)
                   .compact_blank
-                  .join(' ')
-      job_details = [job_lines, inline_job].compact_blank.join(' ')
+                  .join(', ')
+      job_details = [job_lines, inline_job].compact_blank.join(', ')
+
+      job_details = job_details
+                    .gsub(/[\/\-\|•]/, '')
+                    .gsub(', ,', ',')
+                    .gsub('  ', ' ')
+                    .strip
+                    .sub(/,\z/, '')
+
       [period, job_details]
     end
 
