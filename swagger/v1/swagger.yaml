@@ -194,6 +194,13 @@ paths:
                     total_experience_years:
                       type: string
                       example: 2.5y
+                    applied_for:
+                      type: string
+                      example: Internship
+                      enum:
+                      - Full Stack Software Engineer
+                      - Internship
+                      - QA
         required: true
 servers:
 - url: http://{defaultHost}
