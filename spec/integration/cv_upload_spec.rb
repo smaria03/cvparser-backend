@@ -224,7 +224,12 @@ RSpec.describe 'CV Upload API', type: :request do
             properties: {
               name: { type: :string, example: 'Maria Silaghi' },
               email: { type: :string, example: 'smaria.oana@yahoo.com' },
-              total_experience_years: { type: :string, example: '2.5y' }
+              total_experience_years: { type: :string, example: '2.5y' },
+              applied_for: {
+                type: :string,
+                example: 'Internship',
+                enum: ['Full Stack Software Engineer', 'Internship', 'QA']
+              }
             }
           }
         }
@@ -236,7 +241,8 @@ RSpec.describe 'CV Upload API', type: :request do
             summary: {
               name: 'Maria Silaghi',
               email: 'smaria.oana@yahoo.com',
-              total_experience_years: '2.5y'
+              total_experience_years: '2.5y',
+              applied_for: 'Internship'
             }
           }
         end

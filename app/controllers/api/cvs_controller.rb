@@ -59,12 +59,24 @@ module Api
       render json: result
     end
 
+    VALID_JOBS = [
+      'Full Stack Software Engineer',
+      'Internship',
+      'QA'
+    ].freeze
+
     def save_to_sheet
       summary = params.require(:summary).permit(
         :name,
         :email,
-        :total_experience_years
+        :total_experience_years,
+        :applied_for
       )
+
+      applied_for = summary[:applied_for]
+      unless VALID_JOBS.include?(applied_for)
+        return render json: { error: 'Invalid job' }, status: :unprocessable_entity
+      end
 
       begin
         write_to_google_sheets(summary.to_h.symbolize_keys)
@@ -80,7 +92,7 @@ module Api
       GoogleSheetsWriter.new.append_row(
         name: data[:name],
         email: data[:email],
-        applied_for: 'Full Stack Software Engineer',
+        applied_for: data[:applied_for],
         experience: data[:total_experience_years]
       )
     rescue StandardError => e
