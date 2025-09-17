@@ -89,11 +89,11 @@ module PdfParsing
       job_details = [job_lines, inline_job].compact_blank.join(', ')
 
       job_details = job_details
-                .gsub(/[\/\-\|•]/, '')
-                .gsub(', ,', ',')
-                .gsub('  ', ' ')
-                .strip
-                .sub(/,\z/, '')
+                    .gsub(/[\/\-\|•]/, '')
+                    .gsub(', ,', ',')
+                    .gsub('  ', ' ')
+                    .strip
+                    .sub(/,\z/, '')
 
       [period, job_details]
     end
