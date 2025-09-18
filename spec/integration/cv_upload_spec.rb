@@ -220,7 +220,7 @@ RSpec.describe 'CV Upload API', type: :request do
         properties: {
           summary: {
             type: :object,
-            required: %w[name email total_experience_years],
+            required: %w[name email total_experience_years applied_for sheet],
             properties: {
               name: { type: :string, example: 'Maria Silaghi' },
               email: { type: :string, example: 'smaria.oana@yahoo.com' },
@@ -229,6 +229,11 @@ RSpec.describe 'CV Upload API', type: :request do
                 type: :string,
                 example: 'Internship',
                 enum: ['Full Stack Software Engineer', 'Internship', 'QA']
+              },
+              sheet: {
+                type: :string,
+                example: 'Internship',
+                description: 'The name of the sheet where the row should be saved'
               }
             }
           }
@@ -236,16 +241,95 @@ RSpec.describe 'CV Upload API', type: :request do
       }
 
       response '200', 'Saved to Google Sheets successfully' do
+        before do
+          allow(GoogleSheetsWriter)
+            .to receive(:new)
+            .and_return(double(list_sheets:
+                                       ['Internship', 'QA', 'Full Stack Software Engineer'],
+                               append_row: true))
+        end
+        schema type: :object,
+               properties: {
+                 message: { type: :string }
+               },
+               required: ['message']
+
+        example 'application/json', :success_example, {
+          message: 'Saved to Google Sheets successfully'
+        }
         let(:summary) do
           {
             summary: {
               name: 'Maria Silaghi',
               email: 'smaria.oana@yahoo.com',
               total_experience_years: '2.5y',
-              applied_for: 'Internship'
+              applied_for: 'Internship',
+              sheet: 'Internship'
             }
           }
         end
+
+        run_test!
+      end
+
+      response '422', 'Validation failed' do
+        before do
+          fake_writer = double('GoogleSheetsWriter',
+                               list_sheets: ['Internship', 'QA', 'Full Stack Software Engineer'])
+          allow(fake_writer).to receive(:append_row).and_raise(ArgumentError,
+                                                               'Sheet does not exist.')
+          allow(GoogleSheetsWriter).to receive(:new).and_return(fake_writer)
+        end
+        schema type: :object,
+               properties: {
+                 error: { type: :string }
+               },
+               required: ['error']
+
+        example 'application/json', :invalid_job_example, {
+          error: 'Invalid job title'
+        }
+
+        example 'application/json', :invalid_sheet_example, {
+          error: 'Sheet does not exist.'
+        }
+
+        let(:summary) do
+          {
+            summary: {
+              name: 'Maria Silaghi',
+              email: 'smaria.oana@yahoo.com',
+              total_experience_years: '2.5y',
+              applied_for: 'InvalidRole',
+              sheet: 'DoesNotExist'
+            }
+          }
+        end
+
+        run_test!
+      end
+    end
+  end
+
+  path '/api/cvs/sheets' do
+    get 'List available sheets' do
+      tags 'CVs'
+      produces 'application/json'
+
+      response '200', 'Sheets listed successfully' do
+        before do
+          allow(GoogleSheetsWriter)
+            .to receive(:new)
+            .and_return(double(list_sheets:
+                                       ['Internship', 'QA', 'Full Stack Software Engineer']))
+        end
+        schema type: :object,
+               properties: {
+                 sheets: {
+                   type: :array,
+                   items: { type: :string }
+                 }
+               }
 
         run_test!
       end
