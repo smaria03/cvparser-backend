@@ -241,6 +241,11 @@ RSpec.describe 'CV Upload API', type: :request do
       }
 
       response '200', 'Saved to Google Sheets successfully' do
+        before do
+          allow_any_instance_of(GoogleSheetsWriter)
+            .to receive(:append_row)
+                  .and_return(true)
+        end
         schema type: :object,
                properties: {
                  message: { type: :string }
@@ -266,6 +271,11 @@ RSpec.describe 'CV Upload API', type: :request do
       end
 
       response '422', 'Validation failed' do
+        before do
+          allow_any_instance_of(GoogleSheetsWriter)
+            .to receive(:append_row)
+                  .and_raise(ArgumentError, 'Sheet does not exist.')
+        end
         schema type: :object,
                properties: {
                  error: { type: :string }
@@ -303,6 +313,11 @@ RSpec.describe 'CV Upload API', type: :request do
       produces 'application/json'
 
       response '200', 'Sheets listed successfully' do
+        before do
+          allow_any_instance_of(GoogleSheetsWriter)
+            .to receive(:list_sheets)
+                  .and_return(['Internship', 'QA', 'Full Stack Software Engineer'])
+        end
         schema type: :object,
                properties: {
                  sheets: {
