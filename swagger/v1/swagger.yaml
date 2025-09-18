@@ -172,6 +172,37 @@ paths:
       responses:
         '200':
           description: Saved to Google Sheets successfully
+          content:
+            application/json:
+              examples:
+                success_example:
+                  value:
+                    message: Saved to Google Sheets successfully
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              examples:
+                invalid_job_example:
+                  value:
+                    error: Invalid job title
+                invalid_sheet_example:
+                  value:
+                    error: Sheet does not exist.
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                - error
       requestBody:
         content:
           application/json:
@@ -184,6 +215,8 @@ paths:
                   - name
                   - email
                   - total_experience_years
+                  - applied_for
+                  - sheet
                   properties:
                     name:
                       type: string
@@ -201,7 +234,28 @@ paths:
                       - Full Stack Software Engineer
                       - Internship
                       - QA
+                    sheet:
+                      type: string
+                      example: Internship
+                      description: The name of the sheet where the row should be saved
         required: true
+  "/api/cvs/sheets":
+    get:
+      summary: List available sheets
+      tags:
+      - CVs
+      responses:
+        '200':
+          description: Sheets listed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sheets:
+                    type: array
+                    items:
+                      type: string
 servers:
 - url: http://{defaultHost}
   variables:

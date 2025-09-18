@@ -70,20 +70,35 @@ module Api
         :name,
         :email,
         :total_experience_years,
-        :applied_for
+        :applied_for,
+        :sheet
       )
 
       applied_for = summary[:applied_for]
+      sheet = summary[:sheet]
       unless VALID_JOBS.include?(applied_for)
         return render json: { error: 'Invalid job' }, status: :unprocessable_entity
       end
 
+      available_sheets = GoogleSheetsWriter.new.list_sheets
+      unless available_sheets.include?(sheet)
+        return render json: { error: "Sheet #{sheet} does not exist." }, status: :unprocessable_entity
+      end
+
       begin
-        write_to_google_sheets(summary.to_h.symbolize_keys)
+        write_to_google_sheets(summary.to_h.symbolize_keys.merge(sheet: sheet))
         render json: { message: 'Saved to Google Sheets successfully' }, status: :ok
       rescue StandardError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
+    end
+
+    def list_sheets
+      sheets = GoogleSheetsWriter.new.list_sheets
+      render json: { sheets: sheets }, status: :ok
+    rescue StandardError => e
+      Rails.logger.error "[GoogleSheets] Failed to list sheets: #{e.message}"
+      render json: { error: e.message }, status: :unprocessable_entity
     end
 
     private
@@ -93,10 +108,12 @@ module Api
         name: data[:name],
         email: data[:email],
         applied_for: data[:applied_for],
-        experience: data[:total_experience_years]
+        experience: data[:total_experience_years],
+        sheet: data[:sheet]
       )
     rescue StandardError => e
       Rails.logger.error "[GoogleSheets] Failed to append row: #{e.message}"
+      raise e
     end
   end
 end
