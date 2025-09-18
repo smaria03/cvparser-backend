@@ -242,9 +242,11 @@ RSpec.describe 'CV Upload API', type: :request do
 
       response '200', 'Saved to Google Sheets successfully' do
         before do
-          allow_any_instance_of(GoogleSheetsWriter)
-            .to receive(:append_row)
-                  .and_return(true)
+          allow(GoogleSheetsWriter)
+            .to receive(:new)
+            .and_return(double(list_sheets:
+                                       ['Internship', 'QA', 'Full Stack Software Engineer'],
+                               append_row: true))
         end
         schema type: :object,
                properties: {
@@ -272,9 +274,11 @@ RSpec.describe 'CV Upload API', type: :request do
 
       response '422', 'Validation failed' do
         before do
-          allow_any_instance_of(GoogleSheetsWriter)
-            .to receive(:append_row)
-                  .and_raise(ArgumentError, 'Sheet does not exist.')
+          fake_writer = double('GoogleSheetsWriter',
+                               list_sheets: ['Internship', 'QA', 'Full Stack Software Engineer'])
+          allow(fake_writer).to receive(:append_row).and_raise(ArgumentError,
+                                                               'Sheet does not exist.')
+          allow(GoogleSheetsWriter).to receive(:new).and_return(fake_writer)
         end
         schema type: :object,
                properties: {
@@ -314,9 +318,10 @@ RSpec.describe 'CV Upload API', type: :request do
 
       response '200', 'Sheets listed successfully' do
         before do
-          allow_any_instance_of(GoogleSheetsWriter)
-            .to receive(:list_sheets)
-                  .and_return(['Internship', 'QA', 'Full Stack Software Engineer'])
+          allow(GoogleSheetsWriter)
+            .to receive(:new)
+            .and_return(double(list_sheets:
+                                       ['Internship', 'QA', 'Full Stack Software Engineer']))
         end
         schema type: :object,
                properties: {
