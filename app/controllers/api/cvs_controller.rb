@@ -59,12 +59,6 @@ module Api
       render json: result
     end
 
-    VALID_JOBS = [
-      'Full Stack Software Engineer',
-      'Internship',
-      'QA'
-    ].freeze
-
     def save_to_sheet
       summary = params.require(:summary).permit(
         :name,
@@ -76,12 +70,7 @@ module Api
         experiences: %i[job_details period]
       )
 
-      applied_for = summary[:applied_for]
       sheet = summary[:sheet]
-      unless VALID_JOBS.include?(applied_for)
-        return render json: { error: 'Invalid job' }, status: :unprocessable_entity
-      end
-
       available_sheets = GoogleSheetsWriter.new.list_sheets
       unless available_sheets.include?(sheet)
         return render json: { error: "Sheet #{sheet} does not exist." }, status: :unprocessable_entity
