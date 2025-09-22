@@ -7,18 +7,20 @@ module PdfParsing
       doc = doc_from_pdf
       nodes = text_nodes_from(doc)
 
-      index = find_skills_index(nodes)
+      index = find_skills_index(nodes, sections)
       return [] unless index
 
       lines = extract_skill_lines(nodes, index)
 
       lines
         .join(', ')
+        .gsub(/\b[^:,]+?:\s*/, '')
         .split(/[,;•\n]/)
         .map(&:strip)
         .reject(&:empty?)
         .uniq
         .join(', ')
+        .gsub(/[\s,\.]+$/, '')
     end
 
     private
@@ -41,18 +43,34 @@ module PdfParsing
 
       lines
         .join(', ')
+        .gsub(/\b[^:,]+?:\s*/, '')
         .split(/[,;•\n]/)
         .map(&:strip)
         .reject(&:empty?)
         .uniq
         .join(', ')
+        .gsub(/[\s,\.]+$/, '')
     end
 
-    def find_skills_index(nodes)
+    def find_skills_index(nodes, sections)
+      experience_nodes = experience_nodes(sections)
+
+      index = nodes.index do |n|
+        text = n[:text].strip.downcase
+        (text.include?('skills') || text.include?('technologies')) && experience_nodes.exclude?(n)
+      end
+      return index if index
+
       nodes.index do |n|
         text = n[:text].strip.downcase
-        text.include?('skills') || text.include?('technologies')
+        (text.include?('skills') || text.include?('technologies')) && experience_nodes.include?(n)
       end
+    end
+
+    def experience_nodes(sections)
+      title = sections[:section_hint][:text].strip.downcase
+      section = sections[:section_blocks].find { |s| s[:title].strip.downcase == title }
+      section ? section[:text_nodes].to_set : Set.new
     end
 
     def extract_skill_lines(nodes, index)

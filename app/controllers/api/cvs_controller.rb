@@ -71,7 +71,9 @@ module Api
         :email,
         :total_experience_years,
         :applied_for,
-        :sheet
+        :sheet,
+        :skills,
+        experiences: %i[job_details period]
       )
 
       applied_for = summary[:applied_for]
@@ -104,12 +106,15 @@ module Api
     private
 
     def write_to_google_sheets(data)
+      normalized_experiences = data[:experiences]&.map(&:symbolize_keys)
       GoogleSheetsWriter.new.append_row(
         name: data[:name],
         email: data[:email],
         applied_for: data[:applied_for],
         experience: data[:total_experience_years],
-        sheet: data[:sheet]
+        sheet: data[:sheet],
+        skills: data[:skills],
+        experiences: normalized_experiences
       )
     rescue StandardError => e
       Rails.logger.error "[GoogleSheets] Failed to append row: #{e.message}"
