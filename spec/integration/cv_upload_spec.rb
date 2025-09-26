@@ -13,6 +13,24 @@ RSpec.describe 'CV Upload API', type: :request do
                 description: 'CV file in PDF format'
 
       response '200', 'CV uploaded successfully' do
+        before do
+          fake_drive = double('DriveService')
+
+          allow(fake_drive).to receive(:list_files).with(
+            q: kind_of(String),
+            fields: 'files(id, name)',
+            page_size: 1
+          ).and_return(double(files: []))
+
+          allow(fake_drive).to receive(:create_file).and_return(
+            double(id: 'fake_id', web_view_link: 'https://drive.google.com/fake_link')
+          )
+
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
+
         let(:file) do
           fixture_file_upload(
             Rails.root.join('spec/fixtures/files/sample_cv.pdf'),
