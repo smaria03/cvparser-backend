@@ -11,5 +11,9 @@ Rails.application.routes.draw do
     get 'cvs/:id/extract_summary', to: 'cvs#extract_summary'
     post 'cvs/save_to_sheet', to: 'cvs#save_to_sheet'
     get 'cvs/sheets', to: 'cvs#list_sheets'
+    post 'cvs/recalculate_experience', to: 'cvs#recalculate_experience'
   end
+  get '/oauth2/authorize', to: 'oauth#authorize', as: :oauth2_authorize
+  get '/oauth2/callback',  to: 'oauth#callback',  as: :oauth2_callback
+  get '/oauth2callback', to: 'oauth#callback'
 end

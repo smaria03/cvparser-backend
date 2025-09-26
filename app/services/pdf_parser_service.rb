@@ -40,9 +40,7 @@ class PdfParserService
     section_blocks = build_section_blocks(text_nodes, font_id)
 
     {
-      section_hint: section_hint,
-      font_id: font_id,
-      section_blocks: section_blocks
+      section_hint: section_hint, font_id: font_id, section_blocks: section_blocks
     }
   end
 
@@ -52,19 +50,28 @@ class PdfParserService
     sections = extract_sections
 
     {
-      name: extract_name(doc),
-      email: extract_email(text),
-      experiences: extract_experiences(sections),
-      current_job: extract_current_job(sections),
+      name: extract_name(doc), email: extract_email(text),
+      experiences: extract_experiences(sections), current_job: extract_current_job(sections),
       total_experience_years: calculate_total_experience_years(sections),
       skills: extract_skills(sections)
     }
   end
 
+  def recalculate_experience(experiences)
+    total_months = experiences.sum do |exp|
+      months_for_period(exp[:period])
+    end
+
+    years = total_months / 12
+    months = total_months % 12
+
+    "#{years}.#{months}y"
+  end
+
   private
 
   def save_file_locally
-    File.binwrite(@tmp_pdf_path, @file.download)
+    FileUtils.cp(@file.path, @tmp_pdf_path)
   end
 
   def generate_xml_with_poppler
@@ -86,10 +93,8 @@ class PdfParserService
   def text_nodes_from(doc)
     nodes = doc.xpath('//text').map do |node|
       {
-        text: node.text.strip,
-        font: node['font'].to_i,
-        top: node['top'].to_i,
-        left: node['left'].to_i
+        text: node.text.strip, font: node['font'].to_i,
+        top: node['top'].to_i, left: node['left'].to_i
       }
     end
 
@@ -163,8 +168,7 @@ class PdfParserService
 
   def build_section_block(state)
     {
-      title: state[:current_section_title],
-      text_nodes: state[:section_text_nodes]
+      title: state[:current_section_title], text_nodes: state[:section_text_nodes]
     }
   end
 
