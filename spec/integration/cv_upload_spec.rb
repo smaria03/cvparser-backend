@@ -13,6 +13,24 @@ RSpec.describe 'CV Upload API', type: :request do
                 description: 'CV file in PDF format'
 
       response '200', 'CV uploaded successfully' do
+        before do
+          fake_drive = double('DriveService')
+
+          allow(fake_drive).to receive(:list_files).with(
+            q: kind_of(String),
+            fields: 'files(id, name)',
+            page_size: 1
+          ).and_return(double(files: []))
+
+          allow(fake_drive).to receive(:create_file).and_return(
+            double(id: 'fake_id', web_view_link: 'https://drive.google.com/fake_link')
+          )
+
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
+
         let(:file) do
           fixture_file_upload(
             Rails.root.join('spec/fixtures/files/sample_cv.pdf'),
@@ -69,12 +87,23 @@ RSpec.describe 'CV Upload API', type: :request do
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
 
       response '200', 'Summary extracted successfully' do
+        before do
+          fake_drive = double('DriveService')
+
+          allow(fake_drive).to receive(:get_file) do |_file_id, download_dest:|
+            Rails.root.join('spec/fixtures/files/sample_cv.pdf').open('rb') do |f|
+              IO.copy_stream(f, download_dest)
+            end
+          end
+
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
         let(:id) do
-          cv = CvUpload.create!
-          cv.file.attach(
-            io: Rails.root.join('spec/fixtures/files/sample_cv.pdf').open,
-            filename: 'sample_cv.pdf',
-            content_type: 'application/pdf'
+          cv = CvUpload.create!(
+            google_drive_file_id: 'fake_file_id_123',
+            google_drive_link: 'https://drive.google.com/fake_link'
           )
           cv.id
         end
@@ -123,12 +152,23 @@ RSpec.describe 'CV Upload API', type: :request do
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
 
       response '200', 'Text extracted successfully' do
+        before do
+          fake_drive = double('DriveService')
+
+          allow(fake_drive).to receive(:get_file) do |_file_id, download_dest:|
+            Rails.root.join('spec/fixtures/files/sample_cv.pdf').open('rb') do |f|
+              IO.copy_stream(f, download_dest)
+            end
+          end
+
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
         let(:id) do
-          cv = CvUpload.create!
-          cv.file.attach(
-            io: Rails.root.join('spec/fixtures/files/sample_cv.pdf').open,
-            filename: 'sample_cv.pdf',
-            content_type: 'application/pdf'
+          cv = CvUpload.create!(
+            google_drive_file_id: 'fake_file_id_123',
+            google_drive_link: 'https://drive.google.com/fake_link'
           )
           cv.id
         end
@@ -155,12 +195,23 @@ RSpec.describe 'CV Upload API', type: :request do
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
 
       response '200', 'Sections extracted successfully' do
+        before do
+          fake_drive = double('DriveService')
+
+          allow(fake_drive).to receive(:get_file) do |_file_id, download_dest:|
+            Rails.root.join('spec/fixtures/files/sample_cv.pdf').open('rb') do |f|
+              IO.copy_stream(f, download_dest)
+            end
+          end
+
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
         let(:id) do
-          cv = CvUpload.create!
-          cv.file.attach(
-            io: Rails.root.join('spec/fixtures/files/sample_cv.pdf').open,
-            filename: 'sample_cv.pdf',
-            content_type: 'application/pdf'
+          cv = CvUpload.create!(
+            google_drive_file_id: 'fake_file_id_123',
+            google_drive_link: 'https://drive.google.com/fake_link'
           )
           cv.id
         end
@@ -330,6 +381,50 @@ RSpec.describe 'CV Upload API', type: :request do
                    items: { type: :string }
                  }
                }
+
+        run_test!
+      end
+    end
+  end
+
+  path '/api/cvs/recalculate_experience' do
+    post 'Recalculate total experience' do
+      tags 'CVs'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :experiences, in: :body, required: true, schema: {
+        type: :object,
+        properties: {
+          experiences: {
+            type: :array,
+            items: {
+              type: :object,
+              properties: {
+                job_details: { type: :string },
+                period: { type: :string }
+              }
+            }
+          }
+        },
+        required: ['experiences']
+      }
+
+      response '200', 'Experience recalculated successfully' do
+        schema type: :object,
+               properties: {
+                 total_experience_years: { type: :string }
+               },
+               required: ['total_experience_years']
+
+        let(:experiences) do
+          {
+            experiences: [
+              { job_details: 'aaa', period: '2022 - 2025' },
+              { job_details: 'bbb', period: '2021 - 2023' }
+            ]
+          }
+        end
 
         run_test!
       end

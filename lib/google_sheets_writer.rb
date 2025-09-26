@@ -16,8 +16,8 @@ class GoogleSheetsWriter
     @service.authorization = authorizer
   end
 
-  def append_row(name:, email:, applied_for:, experience:, sheet: 'Full Stack Software Engineer',
-                 skills:, experiences: [])
+  def append_row(name:, email:, applied_for:, drive_url:, experience:,
+                 sheet: 'Full Stack Software Engineer', skills:, experiences: [])
     range = "#{sheet}!A:G"
 
     formatted_skills =
@@ -33,7 +33,8 @@ class GoogleSheetsWriter
       else
         ''
       end
-    values = [[name, email, applied_for, '', experience.to_s, formatted_skills, experiences_text]]
+    values = [[name, email, applied_for, drive_url, experience.to_s, formatted_skills,
+               experiences_text]]
     value_range = Google::Apis::SheetsV4::ValueRange.new(values: values)
 
     @service.append_spreadsheet_value(

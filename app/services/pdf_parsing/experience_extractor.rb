@@ -49,6 +49,18 @@ module PdfParsing
       "#{years}.#{months}y"
     end
 
+    def months_for_period(period)
+      return 0 unless period =~ PERIOD_REGEX
+
+      from_str, to_str = normalize_period_text(period).split(/-+/).map(&:strip)
+      from_date = parse_date_string(from_str)
+      to_date = parse_date_string(to_str) || Time.zone.today
+
+      return 0 unless from_date
+
+      months_between(from_date, to_date)
+    end
+
     private
 
     def find_experience_nodes(sections)
@@ -114,18 +126,6 @@ module PdfParsing
       rescue StandardError
         nil
       end
-    end
-
-    def months_for_period(period)
-      return 0 unless period =~ PERIOD_REGEX
-
-      from_str, to_str = normalize_period_text(period).split(/-+/).map(&:strip)
-      from_date = parse_date_string(from_str)
-      to_date = parse_date_string(to_str) || Time.zone.today
-
-      return 0 unless from_date
-
-      months_between(from_date, to_date)
     end
 
     def months_between(from_date, to_date)
