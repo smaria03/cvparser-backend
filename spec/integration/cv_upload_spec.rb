@@ -87,20 +87,24 @@ RSpec.describe 'CV Upload API', type: :request do
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
 
       response '200', 'Summary extracted successfully' do
-        let(:id) do
-          cv = CvUpload.create!(
-            google_drive_file_id: 'fake_file_id_123',
-            google_drive_link: 'https://drive.google.com/fake_link'
-          )
+        before do
+          fake_drive = double('DriveService')
 
-          allow_any_instance_of(Google::Apis::DriveV3::DriveService).to receive(:get_file)
-            .with('fake_file_id_123', any_args)
-            .and_wrap_original do |_method, _file_id, download_dest:|
+          allow(fake_drive).to receive(:get_file) do |_file_id, download_dest:|
             Rails.root.join('spec/fixtures/files/sample_cv.pdf').open('rb') do |f|
               IO.copy_stream(f, download_dest)
             end
           end
 
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
+        let(:id) do
+          cv = CvUpload.create!(
+            google_drive_file_id: 'fake_file_id_123',
+            google_drive_link: 'https://drive.google.com/fake_link'
+          )
           cv.id
         end
 
@@ -148,20 +152,24 @@ RSpec.describe 'CV Upload API', type: :request do
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
 
       response '200', 'Text extracted successfully' do
-        let(:id) do
-          cv = CvUpload.create!(
-            google_drive_file_id: 'fake_file_id_123',
-            google_drive_link: 'https://drive.google.com/fake_link'
-          )
+        before do
+          fake_drive = double('DriveService')
 
-          allow_any_instance_of(Google::Apis::DriveV3::DriveService).to receive(:get_file)
-            .with('fake_file_id_123', any_args)
-            .and_wrap_original do |_method, _file_id, download_dest:|
+          allow(fake_drive).to receive(:get_file) do |_file_id, download_dest:|
             Rails.root.join('spec/fixtures/files/sample_cv.pdf').open('rb') do |f|
               IO.copy_stream(f, download_dest)
             end
           end
 
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
+        let(:id) do
+          cv = CvUpload.create!(
+            google_drive_file_id: 'fake_file_id_123',
+            google_drive_link: 'https://drive.google.com/fake_link'
+          )
           cv.id
         end
 
@@ -187,20 +195,24 @@ RSpec.describe 'CV Upload API', type: :request do
       parameter name: :id, in: :path, type: :string, required: true, description: 'CV ID'
 
       response '200', 'Sections extracted successfully' do
-        let(:id) do
-          cv = CvUpload.create!(
-            google_drive_file_id: 'fake_file_id_456',
-            google_drive_link: 'https://drive.google.com/fake_link_2'
-          )
+        before do
+          fake_drive = double('DriveService')
 
-          allow_any_instance_of(Google::Apis::DriveV3::DriveService).to receive(:get_file)
-            .with('fake_file_id_456', any_args)
-            .and_wrap_original do |_method, _file_id, download_dest:|
+          allow(fake_drive).to receive(:get_file) do |_file_id, download_dest:|
             Rails.root.join('spec/fixtures/files/sample_cv.pdf').open('rb') do |f|
               IO.copy_stream(f, download_dest)
             end
           end
 
+          allow_any_instance_of(Api::CvsController)
+            .to receive(:build_drive_service)
+            .and_return(fake_drive)
+        end
+        let(:id) do
+          cv = CvUpload.create!(
+            google_drive_file_id: 'fake_file_id_123',
+            google_drive_link: 'https://drive.google.com/fake_link'
+          )
           cv.id
         end
 

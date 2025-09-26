@@ -256,6 +256,42 @@ paths:
                     type: array
                     items:
                       type: string
+  "/api/cvs/recalculate_experience":
+    post:
+      summary: Recalculate total experience
+      tags:
+      - CVs
+      parameters: []
+      responses:
+        '200':
+          description: Experience recalculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_experience_years:
+                    type: string
+                required:
+                - total_experience_years
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                experiences:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      job_details:
+                        type: string
+                      period:
+                        type: string
+              required:
+              - experiences
+        required: true
 servers:
 - url: http://{defaultHost}
   variables:
